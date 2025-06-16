@@ -1,26 +1,37 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import logo from '../src/asset/ganitinc-logo.svg';
 
-export default function CameraLogin({ onLogin }) {
+export default function CameraLogin({ onLogin, autoCapture }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [photo, setPhoto] = useState(null);
   const [error, setError] = useState(null);
   const [showDeepfakeMsg, setShowDeepfakeMsg] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    let stream;
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
+      .then(s => {
+        stream = s;
         if (videoRef.current) videoRef.current.srcObject = stream;
       })
       .catch(() => setError('Camera access denied or unavailable.'));
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      }
+      if (stream) stream.getTracks().forEach(track => track.stop());
     };
   }, []);
 
+  useEffect(() => {
+    if (autoCapture && !photo && !error) {
+      const timer = setTimeout(() => {
+        handleCapture();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [autoCapture, photo, error]);
+
   const handleCapture = () => {
+    if (!videoRef.current || !canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     ctx.drawImage(videoRef.current, 0, 0, 320, 240);
     const dataUrl = canvasRef.current.toDataURL('image/png');
@@ -36,12 +47,13 @@ export default function CameraLogin({ onLogin }) {
 
   return (
     <div className="camera-login">
+      <img src={logo} alt="Logo" style={{width: '100px', marginBottom: '1rem'}} />
       <h2>Facial Login</h2>
       {!photo && !showDeepfakeMsg ? (
         <>
           <video ref={videoRef} width="320" height="240" autoPlay playsInline style={{borderRadius: '8px', border: '2px solid #c7d2fe'}} />
           <br />
-          <button onClick={handleCapture} className="feature-btn" style={{marginTop: '1rem'}}>Capture Photo</button>
+          {/* <button onClick={handleCapture} className="feature-btn" style={{marginTop: '1rem'}}>Capture Photo</button> */}
           <canvas ref={canvasRef} width="320" height="240" style={{display:'none'}} />
         </>
       ) : showDeepfakeMsg ? (
