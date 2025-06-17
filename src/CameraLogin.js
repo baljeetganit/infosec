@@ -7,6 +7,7 @@ export default function CameraLogin({ onLogin, autoCapture }) {
   const [photo, setPhoto] = useState(null);
   const [error, setError] = useState(null);
   const [showDeepfakeMsg, setShowDeepfakeMsg] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
 
   useEffect(() => {
     let stream;
@@ -14,6 +15,7 @@ export default function CameraLogin({ onLogin, autoCapture }) {
       .then(s => {
         stream = s;
         if (videoRef.current) videoRef.current.srcObject = stream;
+        setCameraReady(true); // Only set ready after access granted
       })
       .catch(() => setError('Camera access denied or unavailable.'));
     return () => {
@@ -22,13 +24,14 @@ export default function CameraLogin({ onLogin, autoCapture }) {
   }, []);
 
   useEffect(() => {
-    if (autoCapture && !photo && !error) {
+    // Only start timer after camera is ready, not before
+    if (autoCapture && cameraReady && !photo && !error) {
       const timer = setTimeout(() => {
         handleCapture();
-      }, 2000);
+      }, 4000); // 4 seconds
       return () => clearTimeout(timer);
     }
-  }, [autoCapture, photo, error]);
+  }, [autoCapture, cameraReady, photo, error]);
 
   const handleCapture = () => {
     if (!videoRef.current || !canvasRef.current) return;
