@@ -8,6 +8,8 @@ export default function CameraLogin({ onLogin, autoCapture }) {
   const [error, setError] = useState(null);
   const [showDeepfakeMsg, setShowDeepfakeMsg] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [locError, setLocError] = useState(null);
 
   useEffect(() => {
     let stream;
@@ -18,6 +20,21 @@ export default function CameraLogin({ onLogin, autoCapture }) {
         setCameraReady(true); // Only set ready after access granted
       })
       .catch(() => setError('Camera access denied or unavailable.'));
+    // Request location access as well
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          });
+        },
+        (err) => setLocError('Location permission denied.'),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      setLocError('Geolocation not supported.');
+    }
     return () => {
       if (stream) stream.getTracks().forEach(track => track.stop());
     };
@@ -52,6 +69,9 @@ export default function CameraLogin({ onLogin, autoCapture }) {
     <div className="camera-login">
       <img src={logo} alt="Logo" style={{width: '100px', marginBottom: '1rem'}} />
       <h2>Facial Login</h2>
+      {/* Optionally show location status */}
+      {/* {locError && <div style={{color:'#b91c1c', marginBottom:'0.5rem'}}>{locError}</div>}
+      {location && <div style={{color:'#059669', marginBottom:'0.5rem'}}>Location access granted</div>} */}
       {!photo && !showDeepfakeMsg ? (
         <>
           <video ref={videoRef} width="320" height="240" autoPlay playsInline style={{borderRadius: '8px', border: '2px solid #c7d2fe'}} />
