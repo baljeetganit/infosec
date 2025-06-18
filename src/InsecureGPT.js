@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 function InsecureGPT({ onBack, onAdClick, onQuiz }) {
   const questions = [
@@ -14,40 +14,8 @@ function InsecureGPT({ onBack, onAdClick, onQuiz }) {
   const [done, setDone] = useState(false);
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    // Add glitter animation to the banner
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes glitter {
-        0% { box-shadow: 0 0 8px 2px #fffbe6, 0 0 0 #fff; }
-        50% { box-shadow: 0 0 24px 8px #ffe066, 0 0 8px 2px #fff; }
-        100% { box-shadow: 0 0 8px 2px #fffbe6, 0 0 0 #fff; }
-      }
-      .job-banner-glitter {
-        position: fixed;
-        right: 2vw;
-        bottom: 2vw;
-        z-index: 1000;
-        background: linear-gradient(90deg, #e0e7ff 0%, #fffbe6 100%);
-        border: 2px solid #ffe066;
-        border-radius: 16px 16px 16px 0;
-        box-shadow: 0 2px 16px rgba(255,224,102,0.18);
-        padding: 1.1rem 2.2rem 1.1rem 1.2rem;
-        min-width: 260px;
-        animation: glitter 2.2s infinite;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-      .job-banner-glitter .glitter-emoji {
-        font-size: 2rem;
-        animation: glitter 1.2s infinite alternate;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, []);
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [showImageWarning, setShowImageWarning] = useState(false);
 
   const handleNext = (e) => {
     e.preventDefault();
@@ -63,6 +31,18 @@ function InsecureGPT({ onBack, onAdClick, onQuiz }) {
     setInput('');
     if (step === questions.length - 1) setDone(true);
     else setStep(step + 1);
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setUploadedImage(ev.target.result);
+        setTimeout(() => setShowImageWarning(true), 1800);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -99,15 +79,45 @@ function InsecureGPT({ onBack, onAdClick, onQuiz }) {
           </>
         )}
       </div>
-      {/* Job scam banner, bottom right with glitter */}
-      <div className="job-banner-glitter">
-        <span className="glitter-emoji" role="img" aria-label="sparkles">✨</span>
+      <div className="ad-job-responsive">
+        <span style={{fontSize:'2rem'}}>✨</span>
         <div style={{flex:1}}>
           <b>No Work-Life Balance? Apply Now!</b>
           <div style={{fontSize:'0.97rem'}}>Enter your email for a dream job with no work-life balance!</div>
           <button className="feature-btn" style={{background:'#ffe066', color:'#222', marginTop:'0.5rem', width:'auto', minWidth:'120px'}} onClick={onAdClick}>Apply for Dream Job</button>
         </div>
       </div>
+      <style>{`
+        .ad-job-responsive {
+          position: fixed;
+          right: 2vw;
+          bottom: 2vw;
+          z-index: 1000;
+          background: linear-gradient(90deg, #e0e7ff 0%, #fffbe6 100%);
+          border: 2px solid #ffe066;
+          border-radius: 16px 16px 16px 0;
+          box-shadow: 0 2px 16px rgba(255,224,102,0.18);
+          padding: 1.1rem 2.2rem 1.1rem 1.2rem;
+          min-width: 260px;
+          max-width: 90vw;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        @media (max-width: 600px) {
+          .ad-job-responsive {
+            position: fixed;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            border-radius: 12px 12px 0 0;
+            min-width: 0;
+            max-width: 100vw;
+            padding: 1rem 0.5rem;
+            justify-content: center;
+          }
+        }
+      `}</style>
     </>
   );
 }
